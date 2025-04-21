@@ -1,0 +1,77 @@
+import pyautogui
+import pytesseract
+import openai
+import cv2
+import speech_recognition as sr
+import pyttsx3
+import time
+import os
+
+openai.api_key = os.getenv("OPENAI_API_KEY")
+
+engine = pyttsx3.init()
+def speak(text):
+    engine.say(text)
+    engine.runAndWait()
+
+def capture_voice_command():
+    recognizer = sr.Recognizer()
+    with sr.Microphone() as source:
+        print("Listening for command...")
+        audio = recognizer.listen(source)
+    try:
+        command = recognizer.recognize_google(audio)
+        print(f"Heard: {command}")
+        return command
+    except sr.UnknownValueError:
+        speak("Sorry, I didn’t catch that.")
+        return None
+
+def parse_command(command):
+    prompt = f"""
+    You are a desktop assistant. Interpret the following user's natural language command 
+    and convert it to a simple step-by-step action plan using desktop automation: \"{command}\"
+    Output format:
+    1. Action (e.g. Open app)
+    2. Navigate (e.g. Click button)
+    3. Type or interact
+    """
+    response = openai.ChatCompletion.create(
+        model="gpt-4",
+        messages=[{"role": "user", "content": prompt}]
+    )
+    actions = response["choices"][0]["message"]["content"]
+    print("Parsed actions:")
+    print(actions)
+    return actions
+
+def perform_action(actions_text):
+    if "open" in actions_text.lower():
+        if "figma" in actions_text.lower():
+            speak("Opening Figma")
+            os.system("start figma")
+            time.sleep(3)
+    if "type" in actions_text.lower():
+        speak("Typing content")
+        pyautogui.write("Hello from NeuroLens", interval=0.05)
+    if "send" in actions_text.lower():
+        speak("Sending file")
+        pyautogui.hotkey("ctrl", "enter")
+
+def read_screen_text():
+    screenshot = pyautogui.screenshot()
+    screenshot.save("screen.png")
+    img = cv2.imread("screen.png")
+    text = pytesseract.image_to_string(img)
+    return text
+
+def main():
+    while True:
+        command = capture_voice_command()
+        if not command:
+            continue
+        actions = parse_command(command)
+        perform_action(actions)
+
+if __name__ == "__main__":
+    main()
