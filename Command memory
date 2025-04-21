@@ -1,0 +1,34 @@
+import json
+import os
+
+def save_context(context):
+    with open("context.json", "w") as f:
+        json.dump(context, f)
+
+def load_context():
+    if os.path.exists("context.json"):
+        with open("context.json", "r") as f:
+            return json.load(f)
+    return {}
+
+def update_context(command, app_state):
+    context = load_context()
+    context["last_command"] = command
+    context["last_app_state"] = app_state
+    save_context(context)
+
+def get_last_command():
+    context = load_context()
+    return context.get("last_command", None)
+
+def get_last_app_state():
+    context = load_context()
+    return context.get("last_app_state", None)
+
+
+if __name__ == "__main__":
+    command = "open figma"
+    app_state = "figma_opened"
+    update_context(command, app_state)
+    print(f"Last Command: {get_last_command()}")
+    print(f"Last App State: {get_last_app_state()}")
