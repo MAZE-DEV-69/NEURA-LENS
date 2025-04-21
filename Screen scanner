@@ -1,0 +1,56 @@
+import pyautogui
+import pytesseract
+import cv2
+import numpy as np
+
+def read_screen_text():
+    screenshot = pyautogui.screenshot()
+    screenshot.save("screen.png")
+    img = cv2.imread("screen.png")
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    text = pytesseract.image_to_string(gray_img)
+    return text
+
+def find_element_on_screen(target_text):
+    screenshot = pyautogui.screenshot()
+    screenshot.save("screen.png")
+    img = cv2.imread("screen.png")
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    boxes = pytesseract.image_to_boxes(gray_img)  # Get bounding box coordinates of characters
+
+    for box in boxes.splitlines():
+        b = box.split()
+        char = b[0]
+        x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
+
+        
+        if target_text.lower() in char.lower():
+            pyautogui.click(x, y)  # Click the found position
+            return True
+    return False
+
+def perform_action(actions_text):
+    if "open" in actions_text.lower():
+        if "figma" in actions_text.lower():
+            speak("Opening Figma")
+            os.system("start figma")
+            time.sleep(3)
+    elif "type" in actions_text.lower():
+        speak("Typing content")
+        pyautogui.write("Hello from NeuroLens", interval=0.05)
+    elif "click" in actions_text.lower():
+        target_text = "Click"
+        if find_element_on_screen(target_text):
+            speak(f"Clicked on {target_text}")
+        else:
+            speak(f"{target_text} not found on screen.")
+    elif "send" in actions_text.lower():
+        speak("Sending file")
+        pyautogui.hotkey("ctrl", "enter")
+
+if __name__ == "__main__":
+    while True:
+        command = capture_voice_command()
+        if command:
+            actions = parse_command(command)
+            perform_action(actions)
