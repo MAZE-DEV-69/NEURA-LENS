@@ -1,0 +1,41 @@
+import pygetwindow as gw
+import pyautogui
+import time
+
+def open_app(app_name):
+    try:
+        app_window = gw.getWindowsWithTitle(app_name)[0]
+        app_window.restore()
+        app_window.activate()
+        print(f"{app_name} is now active.")
+    except IndexError:
+        print(f"{app_name} is not open.")
+        speak(f"{app_name} not open, opening it.")
+        os.system(f"start {app_name}")  # Modify for macOS/Linux
+
+def switch_between_apps(app_name):
+    open_app(app_name)
+    time.sleep(2)  # Allow some time for app switching
+
+def execute_workflow(workflow):
+    for step in workflow:
+        action_type = step["type"]
+        if action_type == "open_app":
+            open_app(step["app"])
+        elif action_type == "click":
+            target_text = step["target"]
+            if not find_element_on_screen(target_text):
+                raise ValueError(f"{target_text} not found on screen.")
+            speak(f"Clicked on {target_text}")
+        elif action_type == "type":
+            pyautogui.write(step["text"], interval=0.05)
+        time.sleep(1)
+
+def perform_action(actions_text):
+    try:
+        workflow = parse_command(actions_text)
+        execute_workflow(workflow)
+    except Exception as e:
+        print(f"Error: {e}")
+        speak(f"Error: {e}. Retrying.")
+        perform_action(actions_text)
