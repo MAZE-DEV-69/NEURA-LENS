@@ -1,0 +1,39 @@
+import pystray
+from pystray import MenuItem as item
+from PIL import Image, ImageDraw
+import threading
+
+def create_image():
+    image = Image.new("RGB", (64, 64), color=(255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    draw.rectangle([0, 0, 64, 64], fill=(0, 0, 0))
+    return image
+
+def on_quit(icon, item):
+    icon.stop()
+
+def on_activate(icon, item):
+    print("NeuroLens Activated")
+    speak("NeuroLens is activated. Listening for your commands.")
+    
+    command = capture_voice_command()
+    if command:
+        actions = parse_command(command)
+        perform_action(actions)
+
+def setup_tray():
+    icon = pystray.Icon("NeuroLens", create_image(), menu=(
+        item("Activate", on_activate),
+        item("Quit", on_quit)
+    ))
+    icon.run()
+
+def start_tray_thread():
+    tray_thread = threading.Thread(target=setup_tray)
+    tray_thread.daemon = True
+    tray_thread.start()
+
+if __name__ == "__main__":
+    start_tray_thread()
+    while True:
+        time.sleep(1)
