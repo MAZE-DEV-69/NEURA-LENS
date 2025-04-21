@@ -1,0 +1,44 @@
+import pyautogui
+import time
+
+def perform_action_with_error_handling(actions_text):
+    try:
+        if "open" in actions_text.lower():
+            if "figma" in actions_text.lower():
+                speak("Opening Figma")
+                os.system("start figma")
+                time.sleep(3)
+        elif "type" in actions_text.lower():
+            speak("Typing content")
+            pyautogui.write("Hello from NeuroLens", interval=0.05)
+        elif "click" in actions_text.lower():
+            target_text = "Click"
+            if not find_element_on_screen(target_text):
+                raise ValueError(f"{target_text} not found on screen.")
+            speak(f"Clicked on {target_text}")
+        elif "send" in actions_text.lower():
+            speak("Sending file")
+            pyautogui.hotkey("ctrl", "enter")
+    except Exception as e:
+        print(f"Error: {e}")
+        speak(f"An error occurred: {e}. Trying again.")
+        
+        time.sleep(2)
+        perform_action_with_error_handling(actions_text)
+
+def find_element_on_screen(target_text):
+    screenshot = pyautogui.screenshot()
+    screenshot.save("screen.png")
+    img = cv2.imread("screen.png")
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    boxes = pytesseract.image_to_boxes(gray_img)
+
+    for box in boxes.splitlines():
+        b = box.split()
+        char = b[0]
+        x, y, w, h = int(b[1]), int(b[2]), int(b[3]), int(b[4])
+
+        if target_text.lower() in char.lower():
+            pyautogui.click(x, y)
+            return True
+    return False
